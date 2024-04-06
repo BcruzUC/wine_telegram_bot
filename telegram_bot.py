@@ -1,47 +1,10 @@
 import psycopg2
-import re
-from telegram import Bot, Update, ForceReply
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram import Update, ForceReply
+from telegram.ext import ContextTypes
+from misc_functions import print_result
 
-def extract_categories(text):
-    all_results = []
-    sections = text.strip().split('\n\n')
 
-    for section in sections:
-        categories = {}
-        lines = section.strip().split('\n')
-        current_category = None
 
-        for line in lines:
-            if ":" in line:
-                category, content = re.split(r'\s*:\s*', line, maxsplit=1)
-                category = category.lower()
-                categories[category] = content.strip().lower()
-                current_category = category
-            elif current_category:
-                categories[current_category] += ' ' + line.strip()
-
-        all_results.append(categories)
-
-    return all_results
-
-def search_wine(wine_list, attribute, attribute_name):
-    wines_found = []
-    attribute = attribute.lower()
-    attribute_name = attribute_name.lower()
-    for wine in wine_list:
-        if attribute_name in wine[attribute]:
-            wines_found.append(wine)
-    return wines_found
-
-def print_result(result_tuple):
-    output = ""
-    for result in result_tuple:
-        output += f"Name: {result[1].upper()}\nType: {result[2]}\nNotes: {result[3]}\nGrapes: {result[7]}\n\n"
-    return output
-
-# def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     context.bot.send_message(chat_id=update.effective_chat.id, text="Hello! Welcome to WineBot. Use /search <attribute> <attribute_name> to search for wines.")
 
 # Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -70,11 +33,6 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     attribute = args[0]
     attribute_name = args[1]
 
-    # with open('wines.txt', 'r') as text:
-    #     wine_list = extract_categories(text.read())
-
-    # found_wines = search_wine(wine_list, attribute, attribute_name)
-
     # Connect to PostgreSQL database
     conn = psycopg2.connect(
         dbname='wine_bot',
@@ -96,10 +54,8 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if found_wines:
         result_text = print_result(found_wines)
         await update.message.reply_text(result_text)
-        # context.bot.send_message(chat_id=update.effective_chat.id, text=result_text)
     else:
         await update.message.reply_text("No wines found with the specified attribute.")
-        # context.bot.send_message(chat_id=update.effective_chat.id, text="No wines found with the specified attribute.")
 
 
 async def add_wine(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -181,28 +137,3 @@ async def search_flight(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("No flight of fancy found for the specified number.")
 
-
-def main():
-    # Create a bot instance
-    application = Application.builder().token("7105985308:AAF_YDpXpO0e-LtyGPU5SWDNbJBciGWKxqE").build()
-
-    # on different commands - answer in Telegram
-    application.add_handler(CommandHandler("start", start))
-
-    # Searcher
-    application.add_handler(CommandHandler("search", search))
-
-    # Add wine
-    application.add_handler(CommandHandler("add_wine", add_wine))
-
-    # Search flight
-    application.add_handler(CommandHandler("search_flight", search_flight))
-
-    # Help command to test - work this so there's real help
-    application.add_handler(CommandHandler("help", help_command))
-
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
-
-
-if __name__ == '__main__':
-    main()
