@@ -2,6 +2,7 @@ import psycopg2
 from telegram import Update, ForceReply
 from telegram.ext import ContextTypes
 from misc_functions import print_result
+from db_function import connection_string
 
 
 
@@ -34,12 +35,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     attribute_name = args[1]
 
     # Connect to PostgreSQL database
-    conn = psycopg2.connect(
-        dbname='wine_bot',
-        user='benjacruz',
-        password='bcruz123',
-        host='localhost'
-    )
+    conn = psycopg2.connect(connection_string)
     cur = conn.cursor()
 
     # Execute SQL query to search for wines
@@ -76,12 +72,7 @@ async def add_wine(update: Update, context: ContextTypes.DEFAULT_TYPE):
         wine_attributes[category] = content
 
     # Connect to PostgreSQL database
-    conn = psycopg2.connect(
-        dbname='wine_bot',
-        user='benjacruz',
-        password='bcruz123',
-        host='localhost'
-    )
+    conn = psycopg2.connect(connection_string)
     cur = conn.cursor()
 
     # Insert the new wine into the database
@@ -112,12 +103,7 @@ async def search_flight(update: Update, context: ContextTypes.DEFAULT_TYPE):
     flight_id = args[0]
 
     # Connect to PostgreSQL database
-    conn = psycopg2.connect(
-        dbname='wine_bot',
-        user='benjacruz',
-        password='bcruz123',
-        host='localhost'
-    )
+    conn = psycopg2.connect(connection_string)
     cur = conn.cursor()
 
     # Execute SQL query to search for wines related to the specified flight
